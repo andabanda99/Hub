@@ -2,7 +2,11 @@
  * Water Street Tampa Seed Data
  *
  * Real coordinates for POC testing at Water Street Tampa district.
- * These venues are used for the "Stadium Test" POC scenario.
+ * Focus: The bar cluster (Edition, Boulon, Pearl, Alter Ego) + Predalina edge case.
+ *
+ * The "Predalina Problem": Predalina is ~250m from the main cluster - just far
+ * enough that natural foot traffic doesn't flow there. This is the core use case
+ * for The Hub's Gravity Well and Open Door features.
  *
  * Coordinates sourced from public map data (Google Maps, OpenStreetMap).
  */
@@ -26,14 +30,14 @@ export const WATER_STREET_HUB = {
       allowedConfidence: ['live', 'recent'] as const,
     },
   },
-  // Polygon defining the Water Street district boundary
-  // Roughly bounded by Channelside Dr, Meridian Ave, Kennedy Blvd, and the waterfront
+  // Tighter polygon focused on the actual bar cluster + Predalina
+  // The cluster is near the Tampa Edition hotel area
   geofence: [
-    { lat: 27.9425, lng: -82.4535 }, // NW corner
-    { lat: 27.9425, lng: -82.4445 }, // NE corner
-    { lat: 27.9375, lng: -82.4445 }, // SE corner
-    { lat: 27.9375, lng: -82.4535 }, // SW corner
-    { lat: 27.9425, lng: -82.4535 }, // Close polygon
+    { lat: 27.9435, lng: -82.4520 }, // NW corner (past Predalina)
+    { lat: 27.9435, lng: -82.4470 }, // NE corner
+    { lat: 27.9395, lng: -82.4470 }, // SE corner
+    { lat: 27.9395, lng: -82.4520 }, // SW corner
+    { lat: 27.9435, lng: -82.4520 }, // Close polygon
   ] as Coordinates[],
   eventPhase: null,
 };
@@ -60,15 +64,52 @@ export interface VenueSeedData {
 }
 
 export const WATER_STREET_VENUES: VenueSeedData[] = [
+  // =========================================================================
+  // THE CLUSTER: Edition, Boulon, Pearl, Alter Ego
+  // These are ~50-100m apart - natural foot traffic between them
+  // =========================================================================
   {
-    venueId: 'sparkman-wharf',
+    venueId: 'the-edition',
     hubId: 'water-street-tampa',
-    name: 'Sparkman Wharf',
-    coordinates: { lat: 27.9395, lng: -82.4515 },
-    basePopularityScore: 85,
+    name: 'The Tampa EDITION',
+    // The Edition hotel bar/lounge - anchor of the cluster
+    coordinates: { lat: 27.9420, lng: -82.4485 },
+    basePopularityScore: 90,
     isAnchor: true, // Major destination, gets +20% radius
-    adBoost: 30,
-    capacity: 500,
+    adBoost: 35,
+    capacity: 200,
+    initialState: {
+      stateId: 3, // Party - typically busy
+      waitMinutes: 18,
+      isPrivateEvent: false,
+    },
+  },
+  {
+    venueId: 'boulon',
+    hubId: 'water-street-tampa',
+    name: 'Boulon Brasserie',
+    // French brasserie, upscale cocktails
+    coordinates: { lat: 27.9415, lng: -82.4480 },
+    basePopularityScore: 82,
+    isAnchor: false,
+    adBoost: 20,
+    capacity: 120,
+    initialState: {
+      stateId: 2, // Social
+      waitMinutes: 10,
+      isPrivateEvent: false,
+    },
+  },
+  {
+    venueId: 'the-pearl',
+    hubId: 'water-street-tampa',
+    name: 'The Pearl',
+    // Oyster bar and cocktails
+    coordinates: { lat: 27.9412, lng: -82.4478 },
+    basePopularityScore: 78,
+    isAnchor: false,
+    adBoost: 15,
+    capacity: 80,
     initialState: {
       stateId: 2, // Social
       waitMinutes: 5,
@@ -76,62 +117,41 @@ export const WATER_STREET_VENUES: VenueSeedData[] = [
     },
   },
   {
-    venueId: 'predalina',
+    venueId: 'alter-ego',
     hubId: 'water-street-tampa',
-    name: 'Predalina',
-    coordinates: { lat: 27.9402, lng: -82.4488 },
-    basePopularityScore: 78,
-    isAnchor: true, // Major restaurant
+    name: 'Alter Ego',
+    // Late night spot, more party-oriented
+    coordinates: { lat: 27.9408, lng: -82.4482 },
+    basePopularityScore: 75,
+    isAnchor: false,
     adBoost: 25,
     capacity: 150,
     initialState: {
-      stateId: 2, // Social
-      waitMinutes: 12,
-      isPrivateEvent: false,
-    },
-  },
-  {
-    venueId: 'jw-marriott-rooftop',
-    hubId: 'water-street-tampa',
-    name: 'JW Marriott Rooftop Bar',
-    coordinates: { lat: 27.9410, lng: -82.4478 },
-    basePopularityScore: 72,
-    isAnchor: false,
-    adBoost: 20,
-    capacity: 100,
-    initialState: {
       stateId: 3, // Party
-      waitMinutes: 20,
+      waitMinutes: 15,
       isPrivateEvent: false,
     },
   },
+
+  // =========================================================================
+  // THE EDGE CASE: Predalina
+  // ~250m from the cluster - the "Predalina Problem"
+  // Just far enough that foot traffic doesn't naturally flow here
+  // This is THE use case for The Hub's Gravity Well
+  // =========================================================================
   {
-    venueId: 'american-social',
+    venueId: 'predalina',
     hubId: 'water-street-tampa',
-    name: 'American Social',
-    coordinates: { lat: 27.9388, lng: -82.4505 },
-    basePopularityScore: 70,
-    isAnchor: false,
-    adBoost: 15,
-    capacity: 200,
+    name: 'Predalina',
+    // Italian restaurant/bar - great venue but slightly isolated
+    coordinates: { lat: 27.9428, lng: -82.4510 },
+    basePopularityScore: 80,
+    isAnchor: true, // Paying for visibility to overcome distance
+    adBoost: 40, // MAX boost to extend radius toward cluster
+    capacity: 150,
     initialState: {
-      stateId: 1, // Quiet
-      waitMinutes: 0,
-      isPrivateEvent: false,
-    },
-  },
-  {
-    venueId: 'the-sail',
-    hubId: 'water-street-tampa',
-    name: 'The Sail Pavilion',
-    coordinates: { lat: 27.9380, lng: -82.4520 },
-    basePopularityScore: 65,
-    isAnchor: false,
-    adBoost: 10,
-    capacity: 300,
-    initialState: {
-      stateId: 2, // Social
-      waitMinutes: 8,
+      stateId: 1, // Quiet - lower traffic due to distance
+      waitMinutes: 0, // Open Door candidate!
       isPrivateEvent: false,
     },
   },
@@ -151,51 +171,54 @@ export interface ZoneSeedData {
 
 export const WATER_STREET_ZONES: ZoneSeedData[] = [
   {
-    zoneId: 'main-promenade',
+    zoneId: 'edition-cluster',
     hubId: 'water-street-tampa',
-    name: 'Main Promenade',
-    zoneType: 'walkable',
-    polygon: [
-      { lat: 27.9405, lng: -82.4520 },
-      { lat: 27.9405, lng: -82.4475 },
-      { lat: 27.9390, lng: -82.4475 },
-      { lat: 27.9390, lng: -82.4520 },
-    ],
-  },
-  {
-    zoneId: 'waterfront-park',
-    hubId: 'water-street-tampa',
-    name: 'Waterfront Park',
-    zoneType: 'quiet',
-    polygon: [
-      { lat: 27.9390, lng: -82.4535 },
-      { lat: 27.9390, lng: -82.4515 },
-      { lat: 27.9375, lng: -82.4515 },
-      { lat: 27.9375, lng: -82.4535 },
-    ],
-  },
-  {
-    zoneId: 'sparkman-plaza',
-    hubId: 'water-street-tampa',
-    name: 'Sparkman Plaza',
+    name: 'Edition Bar Cluster',
     zoneType: 'party',
+    // The main cluster area: Edition, Boulon, Pearl, Alter Ego
     polygon: [
-      { lat: 27.9400, lng: -82.4525 },
-      { lat: 27.9400, lng: -82.4505 },
-      { lat: 27.9390, lng: -82.4505 },
-      { lat: 27.9390, lng: -82.4525 },
+      { lat: 27.9425, lng: -82.4490 },
+      { lat: 27.9425, lng: -82.4475 },
+      { lat: 27.9405, lng: -82.4475 },
+      { lat: 27.9405, lng: -82.4490 },
     ],
   },
   {
-    zoneId: 'meridian-garage',
+    zoneId: 'water-street-promenade',
     hubId: 'water-street-tampa',
-    name: 'Meridian Parking Garage',
+    name: 'Water Street Promenade',
+    zoneType: 'walkable',
+    // Main walkway connecting cluster to Predalina
+    polygon: [
+      { lat: 27.9430, lng: -82.4515 },
+      { lat: 27.9430, lng: -82.4490 },
+      { lat: 27.9420, lng: -82.4490 },
+      { lat: 27.9420, lng: -82.4515 },
+    ],
+  },
+  {
+    zoneId: 'predalina-area',
+    hubId: 'water-street-tampa',
+    name: 'Predalina Area',
+    zoneType: 'walkable',
+    // Slightly isolated - the edge case zone
+    polygon: [
+      { lat: 27.9432, lng: -82.4518 },
+      { lat: 27.9432, lng: -82.4505 },
+      { lat: 27.9424, lng: -82.4505 },
+      { lat: 27.9424, lng: -82.4518 },
+    ],
+  },
+  {
+    zoneId: 'water-street-garage',
+    hubId: 'water-street-tampa',
+    name: 'Water Street Parking',
     zoneType: 'parking',
     polygon: [
+      { lat: 27.9420, lng: -82.4470 },
       { lat: 27.9420, lng: -82.4460 },
-      { lat: 27.9420, lng: -82.4445 },
-      { lat: 27.9410, lng: -82.4445 },
       { lat: 27.9410, lng: -82.4460 },
+      { lat: 27.9410, lng: -82.4470 },
     ],
   },
 ];
@@ -212,55 +235,68 @@ export interface NavigationNodeSeedData {
 }
 
 export const WATER_STREET_NODES: NavigationNodeSeedData[] = [
-  // Main intersections
+  // =========================================================================
+  // CLUSTER INTERSECTIONS
+  // =========================================================================
   {
-    nodeId: 'int-main-channelside',
+    nodeId: 'int-cluster-center',
     hubId: 'water-street-tampa',
     nodeType: 'intersection',
-    coordinates: { lat: 27.9405, lng: -82.4500 },
+    // Central point of the bar cluster
+    coordinates: { lat: 27.9415, lng: -82.4482 },
   },
   {
-    nodeId: 'int-water-morgan',
+    nodeId: 'int-cluster-north',
     hubId: 'water-street-tampa',
     nodeType: 'intersection',
-    coordinates: { lat: 27.9395, lng: -82.4490 },
+    // North end of cluster, toward Predalina
+    coordinates: { lat: 27.9422, lng: -82.4490 },
   },
   {
-    nodeId: 'int-sparkman-entry',
+    nodeId: 'int-predalina-junction',
     hubId: 'water-street-tampa',
     nodeType: 'intersection',
-    coordinates: { lat: 27.9392, lng: -82.4510 },
+    // The decision point: continue to Predalina or stay in cluster
+    coordinates: { lat: 27.9425, lng: -82.4500 },
   },
-  // Venue entrances
+
+  // =========================================================================
+  // VENUE ENTRANCES - The Cluster
+  // =========================================================================
   {
-    nodeId: 'ent-sparkman',
+    nodeId: 'ent-edition',
     hubId: 'water-street-tampa',
     nodeType: 'entrance',
-    coordinates: { lat: 27.9394, lng: -82.4513 },
+    coordinates: { lat: 27.9419, lng: -82.4484 },
   },
+  {
+    nodeId: 'ent-boulon',
+    hubId: 'water-street-tampa',
+    nodeType: 'entrance',
+    coordinates: { lat: 27.9414, lng: -82.4479 },
+  },
+  {
+    nodeId: 'ent-pearl',
+    hubId: 'water-street-tampa',
+    nodeType: 'entrance',
+    coordinates: { lat: 27.9411, lng: -82.4477 },
+  },
+  {
+    nodeId: 'ent-alter-ego',
+    hubId: 'water-street-tampa',
+    nodeType: 'entrance',
+    coordinates: { lat: 27.9407, lng: -82.4481 },
+  },
+
+  // =========================================================================
+  // VENUE ENTRANCE - Predalina (the edge case)
+  // =========================================================================
   {
     nodeId: 'ent-predalina',
     hubId: 'water-street-tampa',
     nodeType: 'entrance',
-    coordinates: { lat: 27.9401, lng: -82.4486 },
-  },
-  {
-    nodeId: 'ent-jw-marriott',
-    hubId: 'water-street-tampa',
-    nodeType: 'entrance',
-    coordinates: { lat: 27.9408, lng: -82.4476 },
-  },
-  {
-    nodeId: 'ent-american-social',
-    hubId: 'water-street-tampa',
-    nodeType: 'entrance',
-    coordinates: { lat: 27.9387, lng: -82.4503 },
-  },
-  {
-    nodeId: 'ent-the-sail',
-    hubId: 'water-street-tampa',
-    nodeType: 'entrance',
-    coordinates: { lat: 27.9379, lng: -82.4518 },
+    // ~250m from cluster center - the "Predalina Problem"
+    coordinates: { lat: 27.9427, lng: -82.4509 },
   },
 ];
 
@@ -277,74 +313,111 @@ export interface NavigationEdgeSeedData {
 }
 
 export const WATER_STREET_EDGES: NavigationEdgeSeedData[] = [
-  // Main promenade connections
+  // =========================================================================
+  // CLUSTER INTERNAL CONNECTIONS (short distances, natural foot traffic)
+  // =========================================================================
+
+  // Cluster center to all venues
   {
     hubId: 'water-street-tampa',
-    fromNodeId: 'int-main-channelside',
-    toNodeId: 'int-water-morgan',
-    distanceMeters: 120,
-    isWalkable: true,
-  },
-  {
-    hubId: 'water-street-tampa',
-    fromNodeId: 'int-water-morgan',
-    toNodeId: 'int-sparkman-entry',
-    distanceMeters: 80,
-    isWalkable: true,
-  },
-  // Sparkman Wharf access
-  {
-    hubId: 'water-street-tampa',
-    fromNodeId: 'int-sparkman-entry',
-    toNodeId: 'ent-sparkman',
-    distanceMeters: 25,
-    isWalkable: true,
-  },
-  // Predalina access
-  {
-    hubId: 'water-street-tampa',
-    fromNodeId: 'int-water-morgan',
-    toNodeId: 'ent-predalina',
-    distanceMeters: 60,
-    isWalkable: true,
-  },
-  // JW Marriott access
-  {
-    hubId: 'water-street-tampa',
-    fromNodeId: 'int-main-channelside',
-    toNodeId: 'ent-jw-marriott',
-    distanceMeters: 95,
-    isWalkable: true,
-  },
-  // American Social access
-  {
-    hubId: 'water-street-tampa',
-    fromNodeId: 'int-sparkman-entry',
-    toNodeId: 'ent-american-social',
+    fromNodeId: 'int-cluster-center',
+    toNodeId: 'ent-edition',
     distanceMeters: 55,
     isWalkable: true,
   },
-  // The Sail access
   {
     hubId: 'water-street-tampa',
-    fromNodeId: 'ent-american-social',
-    toNodeId: 'ent-the-sail',
+    fromNodeId: 'int-cluster-center',
+    toNodeId: 'ent-boulon',
+    distanceMeters: 35,
+    isWalkable: true,
+  },
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'int-cluster-center',
+    toNodeId: 'ent-pearl',
+    distanceMeters: 45,
+    isWalkable: true,
+  },
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'int-cluster-center',
+    toNodeId: 'ent-alter-ego',
     distanceMeters: 85,
     isWalkable: true,
   },
-  // Bidirectional edges (reverse directions)
+
+  // Inter-venue connections (bar hopping paths)
   {
     hubId: 'water-street-tampa',
-    fromNodeId: 'int-water-morgan',
-    toNodeId: 'int-main-channelside',
-    distanceMeters: 120,
+    fromNodeId: 'ent-edition',
+    toNodeId: 'ent-boulon',
+    distanceMeters: 60,
     isWalkable: true,
   },
   {
     hubId: 'water-street-tampa',
-    fromNodeId: 'int-sparkman-entry',
-    toNodeId: 'int-water-morgan',
-    distanceMeters: 80,
+    fromNodeId: 'ent-boulon',
+    toNodeId: 'ent-pearl',
+    distanceMeters: 40,
+    isWalkable: true,
+  },
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'ent-pearl',
+    toNodeId: 'ent-alter-ego',
+    distanceMeters: 55,
+    isWalkable: true,
+  },
+
+  // =========================================================================
+  // CLUSTER TO PREDALINA (the critical "edge case" path)
+  // This is ~250m total - just far enough to break foot traffic
+  // =========================================================================
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'int-cluster-center',
+    toNodeId: 'int-cluster-north',
+    distanceMeters: 90,
+    isWalkable: true,
+  },
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'int-cluster-north',
+    toNodeId: 'int-predalina-junction',
+    distanceMeters: 75,
+    isWalkable: true,
+  },
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'int-predalina-junction',
+    toNodeId: 'ent-predalina',
+    distanceMeters: 85,
+    isWalkable: true,
+  },
+
+  // =========================================================================
+  // BIDIRECTIONAL EDGES (return paths)
+  // =========================================================================
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'ent-predalina',
+    toNodeId: 'int-predalina-junction',
+    distanceMeters: 85,
+    isWalkable: true,
+  },
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'int-predalina-junction',
+    toNodeId: 'int-cluster-north',
+    distanceMeters: 75,
+    isWalkable: true,
+  },
+  {
+    hubId: 'water-street-tampa',
+    fromNodeId: 'int-cluster-north',
+    toNodeId: 'int-cluster-center',
+    distanceMeters: 90,
     isWalkable: true,
   },
 ];
