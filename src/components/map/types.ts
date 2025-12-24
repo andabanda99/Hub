@@ -24,6 +24,16 @@ export interface VenueFeatureProperties {
   // Display properties
   opacity: number; // 1.0 for passing, 0.3 for failing Open Door
   isAnchor: boolean;
+  // Additional properties for detail view
+  frictionScore?: number; // 0-100 friction score
+  rawFactors?: {
+    uber: number;
+    traffic: number;
+    foot: number;
+    garage: number;
+  }; // Raw 0-100 factors for UI breakdown
+  isDegraded?: boolean; // True if calculated without primary source (foot traffic)
+  coordinates?: { lat: number; lng: number }; // Lat/lng coordinates (not Mapbox [lng, lat])
 }
 
 /**

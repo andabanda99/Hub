@@ -22,6 +22,15 @@ export default class Venue extends Model {
   @field('state_timestamp') stateTimestamp!: number;
   @text('state_confidence') stateConfidence!: StateConfidence;
 
+  // Friction Score fields (4-factor algorithm)
+  @field('score_friction') scoreFriction?: number;
+  @field('raw_uber_factor') rawUberFactor?: number;
+  @field('raw_traffic_factor') rawTrafficFactor?: number;
+  @field('raw_foot_factor') rawFootFactor?: number;
+  @field('raw_garage_factor') rawGarageFactor?: number;
+  @field('is_degraded_mode') isDegradedMode?: boolean;
+  @field('friction_calculated_at') frictionCalculatedAt?: number;
+
   @relation('hubs', 'hub_id') hub: any;
 
   get coordinates(): Coordinates {

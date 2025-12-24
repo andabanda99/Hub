@@ -22,13 +22,37 @@
     - *Global State:* Tracks "Event Phase" (e.g., Lightning Game Egress).
 3.  **Venue (Node):** (e.g., Predalina). Belongs to ONE Hub.
     - *Dynamic State:* Venues do not have static profiles. They have **Sensor-Driven States** (Quiet, Social, Party).
+    - *Per-Venue Friction:* Each venue tracks its own friction score with 4-factor breakdown (Uber, Traffic, Foot, Garage).
 
 ## 4. Core Algorithms (The "Brain")
 
-### A. The Friction Score (Ingestion Layer)
-Calculate "Resistance" to entry with **Graceful Degradation**.
-- **Formula:** `Friction = (Uber_Surge * W1) + (Traffic_Flow * W2) + (Garage_Occupancy * W3)`
-- **Resilience:** Implements a "Fallback Waterfall." If an API (e.g., Uber) is down/null, weights automatically rebalance to remaining sources. Do not return `NaN`.
+### A. The Friction Score (4-Factor Algorithm)
+Calculate "Resistance" to entry with **Graceful Degradation** and per-venue tracking.
+
+- **Formula (Standard Mode):**
+  ```
+  Friction = (Uber*0.15) + (Traffic*0.25) + (Foot*0.4) + (Garage*0.2)
+  ```
+  - **Uber Surge:** 15% weight (Quaternary signal - demand indicator)
+  - **Traffic Flow:** 25% weight (Secondary signal - road congestion)
+  - **Foot Traffic:** 40% weight (PRIMARY signal - direct venue congestion)
+  - **Garage Occupancy:** 20% weight (Tertiary signal - parking difficulty)
+
+- **Formula (Degraded Mode - when Foot Traffic unavailable):**
+  ```
+  Friction = (Uber*0.20) + (Traffic*0.35) + (Foot*0.05) + (Garage*0.4)
+  ```
+  - **Confidence Penalty:** When primary source (foot traffic) is down, weights automatically redistribute
+  - System enters "degraded mode" with `is_degraded_mode: true` flag
+  - Garage weight increases to 40% (becomes primary signal)
+
+- **Resilience:** Implements a "Fallback Waterfall." If any API is down/null, weights automatically rebalance. Supports 1-4 active sources. Returns `null` only on total blackout (all sources down).
+
+- **Per-Venue Storage:** Each venue stores:
+  - `score_friction`: Final 0-100 score
+  - `raw_uber_factor`, `raw_traffic_factor`, `raw_foot_factor`, `raw_garage_factor`: Normalized 0-100 values for UI breakdown
+  - `is_degraded_mode`: Boolean indicating if calculated without primary source
+  - `friction_calculated_at`: Timestamp of last calculation
 
 ### B. The "Open Door" Filter (Server-Side)
 **SECURITY CRITICAL:** Filtering happens at the Edge, not the Client.

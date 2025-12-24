@@ -1,11 +1,15 @@
 /**
  * Friction Score Algorithm Tests
  * Per DOMAIN_RULES.md Section 1
+ *
+ * 4-Factor Algorithm: F = (Uber*0.15) + (Traffic*0.25) + (Foot*0.4) + (Garage*0.2)
+ * With confidence penalty when primary source (foot traffic) is unavailable
  */
 
 import {
   normalizeUberSurge,
   normalizeTrafficFlow,
+  normalizeFootTraffic,
   normalizeGarageOccupancy,
   calculateFrictionScore,
   passesOpenDoorFrictionThreshold,
@@ -52,6 +56,24 @@ describe('Friction Score Normalization', () => {
     });
   });
 
+  describe('normalizeFootTraffic', () => {
+    it('should normalize 0 count to 0', () => {
+      expect(normalizeFootTraffic(0, 100)).toBe(0);
+    });
+
+    it('should normalize max count to 100', () => {
+      expect(normalizeFootTraffic(100, 100)).toBe(100);
+    });
+
+    it('should normalize half max count to 50', () => {
+      expect(normalizeFootTraffic(50, 100)).toBe(50);
+    });
+
+    it('should handle zero historical max', () => {
+      expect(normalizeFootTraffic(50, 0)).toBe(0);
+    });
+  });
+
   describe('normalizeGarageOccupancy', () => {
     it('should pass through 0-100 values', () => {
       expect(normalizeGarageOccupancy(50)).toBe(50);
@@ -68,83 +90,183 @@ describe('Friction Score Normalization', () => {
 });
 
 describe('calculateFrictionScore', () => {
-  const historicalMax = 100;
+  const trafficHistoricalMax = 100;
+  const footHistoricalMax = 100;
 
-  describe('All Systems Go (Scenario A)', () => {
+  describe('Standard Mode (All 4 factors available)', () => {
     it('should return 0 when all inputs are minimum', () => {
       const result = calculateFrictionScore(
-        { uberSurge: 1.0, trafficFlow: 0, garageOccupancy: 0 },
-        historicalMax
+        {
+          uberSurge: 1.0,
+          trafficFlow: 0,
+          footTrafficCount: 0,
+          garageOccupancy: 0,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
       );
       expect(result.score).toBe(0);
-      expect(result.scenario).toBe('all_up');
-      expect(result.activeSourceCount).toBe(3);
+      expect(result.isDegraded).toBe(false);
+      expect(result.activeSourceCount).toBe(4);
+      expect(result.rawFactors).toEqual({
+        uber: 0,
+        traffic: 0,
+        foot: 0,
+        garage: 0,
+      });
     });
 
     it('should return ~100 when all inputs are maximum', () => {
       const result = calculateFrictionScore(
-        { uberSurge: 5.0, trafficFlow: 100, garageOccupancy: 100 },
-        historicalMax
+        {
+          uberSurge: 5.0,
+          trafficFlow: 100,
+          footTrafficCount: 100,
+          garageOccupancy: 100,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
       );
       expect(result.score).toBeCloseTo(100, 0);
-      expect(result.scenario).toBe('all_up');
+      expect(result.isDegraded).toBe(false);
+      expect(result.activeSourceCount).toBe(4);
     });
 
-    it('should calculate weighted average correctly', () => {
-      // All inputs at 50 should give 50
+    it('should calculate weighted average with normalized weights', () => {
+      // Weights: Uber=0.15, Traffic=0.25, Foot=0.4, Garage=0.2
+      // All at 50 should give exactly 50
       const result = calculateFrictionScore(
-        { uberSurge: 3.0, trafficFlow: 50, garageOccupancy: 50 },
-        historicalMax
+        {
+          uberSurge: 3.0, // 50 normalized
+          trafficFlow: 50,
+          footTrafficCount: 50,
+          garageOccupancy: 50,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
       );
       expect(result.score).toBeCloseTo(50, 0);
+      expect(result.isDegraded).toBe(false);
+    });
+
+    it('should weight foot traffic highest (40%)', () => {
+      const result = calculateFrictionScore(
+        {
+          uberSurge: 1.0, // 0
+          trafficFlow: 0,
+          footTrafficCount: 100, // Only foot traffic high
+          garageOccupancy: 0,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
+      );
+      // Score should be ~40 (100 * 0.4)
+      expect(result.score).toBeCloseTo(40, 0);
     });
   });
 
-  describe('Uber Down (Scenario B)', () => {
-    it('should redistribute weights when Uber is null', () => {
+  describe('Degraded Mode (Foot traffic unavailable)', () => {
+    it('should apply confidence penalty when foot traffic is null', () => {
       const result = calculateFrictionScore(
-        { uberSurge: null, trafficFlow: 50, garageOccupancy: 50 },
-        historicalMax
+        {
+          uberSurge: 3.0,
+          trafficFlow: 50,
+          footTrafficCount: null, // Primary source down
+          garageOccupancy: 50,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
       );
-      expect(result.scenario).toBe('uber_down');
-      expect(result.activeSourceCount).toBe(2);
-      expect(result.score).toBeCloseTo(50, 0);
+      expect(result.isDegraded).toBe(true);
+      expect(result.activeSourceCount).toBe(3);
+      // Degraded weights: Uber=0.20, Traffic=0.35, Foot=0.05, Garage=0.40
+      // Score = (50*0.20) + (50*0.35) + (0*0.05) + (50*0.40) = 10 + 17.5 + 0 + 20 = 47.5
+      expect(result.score).toBeCloseTo(47.5, 0);
     });
-  });
 
-  describe('Traffic Down (Scenario C)', () => {
-    it('should redistribute weights when Traffic is null', () => {
+    it('should still work with partial data in degraded mode', () => {
       const result = calculateFrictionScore(
-        { uberSurge: 3.0, trafficFlow: null, garageOccupancy: 50 },
-        historicalMax
+        {
+          uberSurge: null,
+          trafficFlow: 75,
+          footTrafficCount: null,
+          garageOccupancy: 75,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
       );
-      expect(result.scenario).toBe('traffic_down');
+      expect(result.isDegraded).toBe(true);
       expect(result.activeSourceCount).toBe(2);
       expect(result.score).not.toBeNull();
     });
   });
 
-  describe('Two Sources Down', () => {
-    it('should use single remaining source', () => {
+  describe('Graceful Degradation', () => {
+    it('should handle single source available', () => {
       const result = calculateFrictionScore(
-        { uberSurge: null, trafficFlow: null, garageOccupancy: 75 },
-        historicalMax
+        {
+          uberSurge: null,
+          trafficFlow: null,
+          footTrafficCount: null,
+          garageOccupancy: 75,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
       );
-      expect(result.scenario).toBe('two_down');
       expect(result.activeSourceCount).toBe(1);
-      expect(result.score).toBe(75);
+      expect(result.score).not.toBeNull();
+    });
+
+    it('should return null when all sources are down (total blackout)', () => {
+      const result = calculateFrictionScore(
+        {
+          uberSurge: null,
+          trafficFlow: null,
+          footTrafficCount: null,
+          garageOccupancy: null,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
+      );
+      expect(result.score).toBeNull();
+      expect(result.rawFactors).toBeNull();
+      expect(result.activeSourceCount).toBe(0);
     });
   });
 
-  describe('Total Blackout', () => {
-    it('should return null when all sources are down', () => {
+  describe('Raw Factors Output', () => {
+    it('should include raw normalized factors for UI breakdown', () => {
       const result = calculateFrictionScore(
-        { uberSurge: null, trafficFlow: null, garageOccupancy: null },
-        historicalMax
+        {
+          uberSurge: 3.0, // 50
+          trafficFlow: 75,
+          footTrafficCount: 60,
+          garageOccupancy: 80,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
       );
-      expect(result.score).toBeNull();
-      expect(result.scenario).toBe('blackout');
-      expect(result.activeSourceCount).toBe(0);
+      expect(result.rawFactors).toEqual({
+        uber: 50,
+        traffic: 75,
+        foot: 60,
+        garage: 80,
+      });
+    });
+
+    it('should use 0 for null factors in raw output', () => {
+      const result = calculateFrictionScore(
+        {
+          uberSurge: null,
+          trafficFlow: 50,
+          footTrafficCount: 50,
+          garageOccupancy: null,
+        },
+        trafficHistoricalMax,
+        footHistoricalMax
+      );
+      expect(result.rawFactors?.uber).toBe(0);
+      expect(result.rawFactors?.garage).toBe(0);
     });
   });
 });

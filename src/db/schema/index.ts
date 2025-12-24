@@ -41,6 +41,14 @@ export const schema = appSchema({
         { name: 'last_known_state_id', type: 'number' },
         { name: 'state_timestamp', type: 'number' }, // Unix timestamp of last state update
         { name: 'state_confidence', type: 'string' }, // 'live' | 'recent' | 'stale' | 'historical'
+        // FRICTION SCORE FIELDS (4-factor algorithm)
+        { name: 'score_friction', type: 'number', isOptional: true }, // 0-100
+        { name: 'raw_uber_factor', type: 'number', isOptional: true }, // 0-100
+        { name: 'raw_traffic_factor', type: 'number', isOptional: true }, // 0-100
+        { name: 'raw_foot_factor', type: 'number', isOptional: true }, // 0-100
+        { name: 'raw_garage_factor', type: 'number', isOptional: true }, // 0-100
+        { name: 'is_degraded_mode', type: 'boolean', isOptional: true },
+        { name: 'friction_calculated_at', type: 'number', isOptional: true }, // Unix timestamp
       ],
     }),
 

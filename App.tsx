@@ -14,16 +14,20 @@ import {
   Text,
   SafeAreaView,
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { HubMap } from './src/components/map';
+import { VenueDetailSheet } from './src/components/venue-detail';
 
 export default function App() {
   // Open Door filter toggle state
   const [isOpenDoorMode, setIsOpenDoorMode] = useState(false);
 
-  // Handle venue press (future: show venue detail sheet)
+  // Selected venue state for bottom sheet
+  const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+
+  // Handle venue press - show venue detail sheet
   const handleVenuePress = useCallback((venueId: string) => {
-    console.log('Venue pressed:', venueId);
-    // TODO: Show venue detail bottom sheet
+    setSelectedVenueId(venueId);
   }, []);
 
   // Toggle Open Door filter
@@ -31,49 +35,62 @@ export default function App() {
     setIsOpenDoorMode((prev) => !prev);
   }, []);
 
+  // Close venue detail sheet
+  const closeVenueDetail = useCallback(() => {
+    setSelectedVenueId(null);
+  }, []);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="light" />
 
-      {/* Main Map */}
-      <HubMap
-        isOpenDoorMode={isOpenDoorMode}
-        onVenuePress={handleVenuePress}
-      />
+        {/* Main Map */}
+        <HubMap
+          isOpenDoorMode={isOpenDoorMode}
+          onVenuePress={handleVenuePress}
+        />
 
-      {/* Open Door Toggle Button */}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.openDoorButton,
-            isOpenDoorMode && styles.openDoorButtonActive,
-          ]}
-          onPress={toggleOpenDoor}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.openDoorIcon}>
-            {isOpenDoorMode ? '🚪' : '🔒'}
-          </Text>
-          <Text
+        {/* Open Door Toggle Button */}
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity
             style={[
-              styles.openDoorText,
-              isOpenDoorMode && styles.openDoorTextActive,
+              styles.openDoorButton,
+              isOpenDoorMode && styles.openDoorButtonActive,
             ]}
+            onPress={toggleOpenDoor}
+            activeOpacity={0.8}
           >
-            Open Door
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Debug Info - Shows filter state */}
-      {__DEV__ && (
-        <View style={styles.debugContainer}>
-          <Text style={styles.debugText}>
-            Mode: {isOpenDoorMode ? 'Open Door' : 'All Venues'}
-          </Text>
+            <Text style={styles.openDoorIcon}>
+              {isOpenDoorMode ? '🚪' : '🔒'}
+            </Text>
+            <Text
+              style={[
+                styles.openDoorText,
+                isOpenDoorMode && styles.openDoorTextActive,
+              ]}
+            >
+              Open Door
+            </Text>
+          </TouchableOpacity>
         </View>
-      )}
-    </SafeAreaView>
+
+        {/* Debug Info - Shows filter state */}
+        {__DEV__ && (
+          <View style={styles.debugContainer}>
+            <Text style={styles.debugText}>
+              Mode: {isOpenDoorMode ? 'Open Door' : 'All Venues'}
+            </Text>
+          </View>
+        )}
+
+        {/* Venue Detail Bottom Sheet */}
+        <VenueDetailSheet
+          venueId={selectedVenueId}
+          onClose={closeVenueDetail}
+        />
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 

@@ -95,6 +95,14 @@ tableSchema({
     { name: 'scheduled_closures', type: 'string' }, // JSON array of unix timestamps
     { name: 'last_known_state_id', type: 'number' },
     { name: 'state_timestamp', type: 'number' },  // Unix timestamp of last state update
-    { name: 'state_confidence', type: 'string' } // 'live' | 'recent' | 'stale' | 'historical'
+    { name: 'state_confidence', type: 'string' }, // 'live' | 'recent' | 'stale' | 'historical'
+    // FRICTION SCORE FIELDS (4-factor algorithm)
+    { name: 'score_friction', type: 'number', isOptional: true }, // 0-100 calculated score
+    { name: 'raw_uber_factor', type: 'number', isOptional: true }, // 0-100 normalized Uber surge
+    { name: 'raw_traffic_factor', type: 'number', isOptional: true }, // 0-100 normalized traffic flow
+    { name: 'raw_foot_factor', type: 'number', isOptional: true }, // 0-100 normalized foot traffic (PRIMARY)
+    { name: 'raw_garage_factor', type: 'number', isOptional: true }, // 0-100 normalized garage occupancy
+    { name: 'is_degraded_mode', type: 'boolean', isOptional: true }, // True if calculated without foot traffic
+    { name: 'friction_calculated_at', type: 'number', isOptional: true } // Unix timestamp of calculation
   ]
 })

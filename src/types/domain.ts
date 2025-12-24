@@ -86,7 +86,16 @@ export interface SyncResponse {
 export interface FrictionInputs {
   uberSurge: number | null; // 1.0x - 5.0x, null if API down
   trafficFlow: number | null; // 0 - historical_max, null if API down
+  footTrafficCount: number | null; // Pedestrian count, null if API down
   garageOccupancy: number | null; // 0-100%, null if API down
+}
+
+// Raw friction factor breakdown for UI
+export interface FrictionFactors {
+  uber: number; // 0-100
+  traffic: number; // 0-100
+  foot: number; // 0-100
+  garage: number; // 0-100
 }
 
 // Hub Manifest (downloaded on geofence entry)
