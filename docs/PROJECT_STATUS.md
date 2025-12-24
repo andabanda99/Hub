@@ -1,6 +1,6 @@
 # The Hub - Project Status
 
-**Timestamp:** 2024-12-22T21:30:00Z
+**Timestamp:** 2024-12-23T12:00:00Z
 
 ## Directory Tree
 
@@ -34,6 +34,14 @@ the-hub/
 │   │   ├── openDoorFilter.ts
 │   │   └── stateConfidence.ts
 │   ├── components/
+│   │   ├── map/
+│   │   │   ├── HubMap.tsx
+│   │   │   ├── VenueGlowLayer.tsx
+│   │   │   ├── useVenueGeoJSON.ts
+│   │   │   ├── mapStyles.ts
+│   │   │   ├── types.ts
+│   │   │   └── index.ts
+│   │   └── index.ts
 │   ├── config/
 │   │   ├── env.ts
 │   │   └── index.ts
@@ -110,13 +118,14 @@ the-hub/
 - [ ] Hub manifest sync service
 
 ### Phase 5: UI Components
-- [ ] Map component with Mapbox
-- [ ] 3D building rendering with glow effects
-- [ ] Open Door filter toggle
+- [x] Map component with Mapbox (HubMap.tsx)
+- [x] Venue glow layer with Gravity Well visualization (VenueGlowLayer.tsx)
+- [x] Open Door filter toggle (App.tsx)
 - [ ] Offline mode indicator
+- [ ] Venue detail bottom sheet
 
 ### Phase 6: Screens
-- [ ] Main map screen
+- [x] Main map screen (App.tsx - integrated)
 - [ ] Venue detail sheet
 - [ ] Settings screen
 
@@ -128,6 +137,28 @@ the-hub/
 - [x] ADR-004: Open Door Filter Security
 - [x] ADR-005: Red Team Resolutions
 
+## Map Component Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/components/map/types.ts` | TypeScript types for map features |
+| `src/components/map/mapStyles.ts` | Midnight theme, camera settings, glow config |
+| `src/components/map/useVenueGeoJSON.ts` | Hook to transform venues to GeoJSON |
+| `src/components/map/VenueGlowLayer.tsx` | CircleLayer with 3-layer glow effect |
+| `src/components/map/HubMap.tsx` | Main map component |
+| `src/components/map/index.ts` | Barrel exports |
+| `App.tsx` | Updated with map + Open Door toggle |
+
+## Open Door Filter Status (Based on Seed Data)
+
+| Venue | Wait Time | Friction | Passes Open Door |
+|-------|-----------|----------|------------------|
+| The Pearl | 5 min | 35 | ✅ Yes |
+| Boulon | 10 min | 45 | ✅ Yes |
+| Predalina | 0 min | 25 | ✅ Yes |
+| Alter Ego | 15 min | 70 | ❌ No (wait ≥ 15) |
+| Edition | 18 min | 65 | ❌ No (wait > 15) |
+
 ## Cost Analysis
 
 | Phase | Cost |
@@ -136,6 +167,13 @@ the-hub/
 | App Store submission | $99/year (Apple) + $25 (Google) |
 | Production (Supabase Pro) | $25/month |
 
-## Next Step
+## Known Issues
 
-**Build the basic Mapbox map component with venue markers using the Water Street Tampa seed data.**
+1. **Jest/ts-jest Version Mismatch**: Jest 30.x with ts-jest 29.x causes test runner failure. TypeScript type checking still passes via `npx tsc --noEmit`.
+
+## Next Steps
+
+1. **Add Mapbox Access Token**: Create `.env` with `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN`
+2. **Test on Device**: Run `npm start` and test on iOS/Android
+3. **Venue Detail Sheet**: Show state, wait time, friction when venue tapped
+4. **Offline Indicator**: Show when data is stale/historical
